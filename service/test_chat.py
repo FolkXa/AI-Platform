@@ -31,7 +31,7 @@ async def test_chat_functionality():
     try:
         # Initialize services (you'll need to set OPENROUTER_API_KEY environment variable)
         import os
-        api_key = os.getenv('OPENROUTER_API_KEY', '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')
+        api_key = os.getenv('OPENROUTER_API_KEY', 'your-api-key')
         
         ai_service = AIServiceImpl(api_key)
         chat_service = ChatServiceImpl(ai_service)
