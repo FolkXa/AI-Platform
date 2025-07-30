@@ -189,12 +189,11 @@ export default function ResumeAnalyzer() {
                       accept=".pdf"
                       onChange={handleFileChange}
                       className="hidden"
-                      id="resume-upload"
+                      id="data-upload"
                     />
-                    <label htmlFor="resume-upload">
-                      <Button variant="outline" className="cursor-pointer bg-transparent">
+                    <label htmlFor="data-upload"
+                      className="inline-block cursor-pointer px-4 py-2 rounded-md font-medium transition-colors focus:outline-none border border-gray-300 text-white hover:text-gray-700 hover:bg-gray-50 bg-transparent">
                         Choose File
-                      </Button>
                     </label>
                   </div>
 

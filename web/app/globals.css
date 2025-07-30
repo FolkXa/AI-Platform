@@ -53,3 +53,87 @@
 ::-webkit-scrollbar-thumb:hover {
   background: rgb(107 114 128);
 }
+
+/* Markdown styling overrides */
+.prose {
+  color: rgb(209 213 219);
+}
+
+.prose code {
+  background-color: rgb(31 41 55);
+  color: rgb(147 197 253);
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+}
+
+.prose pre {
+  background-color: rgb(17 24 39);
+  border: 1px solid rgb(55 65 81);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  overflow-x: auto;
+}
+
+.prose pre code {
+  background-color: transparent;
+  color: inherit;
+  padding: 0;
+  border-radius: 0;
+}
+
+.prose table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1rem 0;
+}
+
+.prose th,
+.prose td {
+  border: 1px solid rgb(55 65 81);
+  padding: 0.5rem;
+  text-align: left;
+}
+
+.prose th {
+  background-color: rgb(31 41 55);
+  font-weight: 600;
+}
+
+.prose blockquote {
+  border-left: 4px solid rgb(34 197 94);
+  padding-left: 1rem;
+  margin: 1rem 0;
+  background-color: rgb(34 197 94 / 0.1);
+  border-radius: 0 0.5rem 0.5rem 0;
+}
+
+.prose ul,
+.prose ol {
+  padding-left: 1.5rem;
+  margin: 1rem 0;
+}
+
+.prose li {
+  margin: 0.25rem 0;
+}
+
+.prose a {
+  color: rgb(74 222 128);
+  text-decoration: underline;
+}
+
+.prose a:hover {
+  color: rgb(34 197 94);
+}
+
+.prose strong {
+  font-weight: 600;
+  color: rgb(255 255 255);
+}
+
+.prose em {
+  font-style: italic;
+  color: rgb(229 231 235);
+}

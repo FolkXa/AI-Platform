@@ -1,11 +1,11 @@
 import pandas as pd
 from typing import List
 import json
-from openai import OpenAI
+from ...clients.openrouter_client import OpenRouterClient
 from ...services.ai_service import AIServiceInterface
 
 class AIServiceImpl(AIServiceInterface):
-    def __init__(self, api_key: str, model: str = "anthropic/claude-3.5-sonnet"):
+    def __init__(self, api_key: str, model: str = "deepseek/deepseek-chat-v3-0324:free"):
         """
         Initialize OpenRouter AI Service using OpenAI SDK
         
@@ -19,27 +19,23 @@ class AIServiceImpl(AIServiceInterface):
         self.model = model
         
         # Initialize OpenAI client with OpenRouter base URL
-        self.client = OpenAI(
-            api_key=api_key,
-            base_url="https://openrouter.ai/api/v1",
-            default_headers={
-                "HTTP-Referer": "https://your-app.com",  # Replace with your app URL
-                "X-Title": "Data Analysis App"  # Replace with your app name
-            }
-        )
+        self.client = OpenRouterClient(api_key=api_key, model=model)
     
     def _make_api_request(self, messages: List[dict], max_tokens: int = 1000) -> str:
         """Make synchronous request using OpenAI SDK"""
         try:
-            response = self.client.chat.completions.create(
-                model=self.model,
+            response = self.client.chat(
                 messages=messages,
                 max_tokens=max_tokens,
                 temperature=0.7
             )
-            return response.choices[0].message.content
+            return response
         except Exception as e:
             raise Exception(f"OpenRouter API error: {str(e)}")
+    
+    def make_api_request(self, messages: List[dict], max_tokens: int = 1000) -> str:
+        """Public method to make API requests"""
+        return self._make_api_request(messages, max_tokens)
     
     def _get_data_summary(self, df: pd.DataFrame) -> str:
         """Get a concise summary of the dataframe structure"""
@@ -74,7 +70,7 @@ class AIServiceImpl(AIServiceInterface):
         
         return json.dumps(summary, indent=2)
     
-    def generate_insights(self, df: pd.DataFrame, file_name: str) -> List[str]:
+    async def generate_insights(self, df: pd.DataFrame, file_name: str) -> List[str]:
         """Generate AI-powered insights about the data"""
         try:
             data_summary = self._get_data_summary(df)
@@ -116,14 +112,12 @@ class AIServiceImpl(AIServiceInterface):
                     clean_line = line.lstrip('0123456789.- ').strip()
                     if clean_line:
                         insights.append(clean_line)
-            
             # Ensure we have exactly 4 insights
             if len(insights) < 4:
                 fallback_insights = self._generate_fallback_insights(df)
                 insights.extend(fallback_insights[len(insights):])
-            
             return insights[:4]
-            
+        
         except Exception as e:
             # Fallback to basic insights if AI service fails
             print(f"AI service failed, using fallback: {e}")
@@ -172,7 +166,7 @@ class AIServiceImpl(AIServiceInterface):
         
         return insights[:4]
     
-    def generate_sample_questions(self, df: pd.DataFrame, headers: List[str]) -> List[str]:
+    async def generate_sample_questions(self, df: pd.DataFrame, headers: List[str]) -> List[str]:
         """Generate AI-powered sample questions based on the data structure"""
         try:
             data_summary = self._get_data_summary(df)

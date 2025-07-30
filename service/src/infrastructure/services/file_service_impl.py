@@ -30,9 +30,16 @@ class FileServiceImpl(FileServiceInterface):
             sample_data.append([str(value) for value in row.values])
         
         # Generate AI insights and questions
-        insights = await self.ai_service.generate_insights(df, filename)
+        print(1)
+        try:
+            insights = await self.ai_service.generate_insights(df, filename)
+        except Exception as e:
+            print(f"Error generating AI insights: {e}")
+            insights = []
+        print(insights)
+        print(2)
         sample_questions = await self.ai_service.generate_sample_questions(df, headers)
-        
+        print(3)
         return FileAnalysis(
             file_name=filename,
             rows=rows,

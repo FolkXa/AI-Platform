@@ -180,7 +180,7 @@ function AuthButton() {
     )
   }
 
-  if (status === "error") {
+  if (status === "unauthenticated") {
     return (
       <Link href="/auth/signin">
         <Button variant="outline" className="text-gray-300 border-gray-600 hover:bg-gray-800 bg-transparent">

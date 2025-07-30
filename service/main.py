@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from src.infrastructure.config import get_settings
 from src.infrastructure.dependencies import get_file_service, get_ai_service
 from src.presentation.api.v1.file_routes import router as file_router
+from src.presentation.api.v1.chat_routes import router as chat_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -24,7 +25,7 @@ app = FastAPI(
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*", "http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -32,6 +33,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(file_router, prefix="/api/v1", tags=["files"])
+app.include_router(chat_router, prefix="/api/v1", tags=["chat"])
 
 @app.get("/")
 async def root():
