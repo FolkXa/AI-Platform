@@ -62,6 +62,7 @@ async def upload_file(
         # Return the response in the requested format
         response = {
             "fileName": analysis.file_name,
+            "fileSize": analysis.file_size,
             "rows": analysis.rows,
             "columns": analysis.columns,
             "headers": analysis.headers,

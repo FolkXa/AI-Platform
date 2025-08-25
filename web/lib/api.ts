@@ -65,12 +65,12 @@ export const dataAPI = {
     return response.data
   },
 
-  // Create a new chat session for CSV file
+  // Create a new Ollama chat session for CSV file
   createChatSession: async (file: File): Promise<ChatSession> => {
     const formData = new FormData()
     formData.append("file", file)
 
-    const response = await api.post("/chat/create-session", formData, {
+    const response = await api.post("/ollama-chat/create-session", formData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },
@@ -84,14 +84,14 @@ export const dataAPI = {
     }
   },
 
-  // Send a message to the chat session
+  // Send a message to the Ollama chat session (non-streaming)
   sendChatMessage: async (sessionId: string, message: string, file: File) => {
     const formData = new FormData()
     formData.append("session_id", sessionId)
     formData.append("message", message)
     formData.append("file", file)
 
-    const response = await api.post("/chat/send-message", formData, {
+    const response = await api.post("/ollama-chat/send-message", formData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },
@@ -105,9 +105,88 @@ export const dataAPI = {
     }
   },
 
-  // Get all messages in a chat session
+  // Send a streaming message to the Ollama chat session
+  sendStreamingMessage: async (sessionId: string, message: string, file: File, onChunk: (chunk: string) => void) => {
+    const formData = new FormData()
+    formData.append("session_id", sessionId)
+    formData.append("message", message)
+    formData.append("file", file)
+
+    const response = await fetch(`${api.defaults.baseURL}/ollama-chat/send-streaming-message`, {
+      method: 'POST',
+      body: formData,
+    })
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+
+    const reader = response.body?.getReader()
+    if (!reader) {
+      throw new Error('No response body reader available')
+    }
+
+    const decoder = new TextDecoder()
+    let buffer = ''
+
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+
+      buffer += decoder.decode(value, { stream: true })
+      
+      // Try to parse complete objects from the buffer (handling Python dict format)
+      let braceCount = 0
+      let startIndex = -1
+      let objects: string[] = []
+      
+      for (let i = 0; i < buffer.length; i++) {
+        if (buffer[i] === '{') {
+          if (braceCount === 0) {
+            startIndex = i
+          }
+          braceCount++
+        } else if (buffer[i] === '}') {
+          braceCount--
+          if (braceCount === 0 && startIndex !== -1) {
+            // Complete object found
+            const objStr = buffer.substring(startIndex, i + 1)
+            objects.push(objStr)
+            startIndex = -1
+          }
+        }
+      }
+      
+      // Process complete objects
+      for (const objStr of objects) {
+        try {
+          // Convert Python dict format to valid JSON
+          const jsonStr = objStr
+            .replace(/'/g, '"')  // Replace single quotes with double quotes
+            .replace(/True/g, 'true')  // Replace Python True with JSON true
+            .replace(/False/g, 'false')  // Replace Python False with JSON false
+          
+          const data = JSON.parse(jsonStr)
+          if (data.message && data.message.content && !data.done) {
+            onChunk(data.message.content)
+          }
+        } catch (error) {
+          console.warn('Failed to parse object chunk:', objStr, error)
+        }
+      }
+      
+      // Keep remaining incomplete object in buffer
+      if (startIndex !== -1) {
+        buffer = buffer.substring(startIndex)
+      } else {
+        buffer = ''
+      }
+    }
+  },
+
+  // Get all messages in an Ollama chat session
   getSessionMessages: async (sessionId: string): Promise<ChatMessage[]> => {
-    const response = await api.get(`/chat/session/${sessionId}/messages`)
+    const response = await api.get(`/ollama-chat/session/${sessionId}/messages`)
     return response.data.map((msg: any) => ({
       id: msg.id,
       content: msg.content,
@@ -117,9 +196,9 @@ export const dataAPI = {
     }))
   },
 
-  // Get session details
+  // Get Ollama session details
   getSessionDetails: async (sessionId: string): Promise<ChatSession> => {
-    const response = await api.get(`/chat/session/${sessionId}`)
+    const response = await api.get(`/ollama-chat/session/${sessionId}`)
     return {
       sessionId: response.data.session_id,
       fileName: response.data.file_name,

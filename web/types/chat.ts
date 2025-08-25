@@ -29,7 +29,7 @@ export interface DataPreview {
   headers: string[]
   sampleData: string[][]
   insights: string[]
-  sampleQuestions: string[]
+  sampleQuestions: string[] | null
   uploadedAt: string
   fileSize: number
   chatSession?: ChatSession

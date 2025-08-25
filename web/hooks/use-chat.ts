@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { dataAPI } from "@/lib/api"
 import { ChatState, ChatMessage, DataPreview, FileUploadState } from "@/types/chat"
 import { toast } from "@/hooks/use-toast"
@@ -21,9 +21,7 @@ export function useChat() {
 
   const [dataPreview, setDataPreview] = useState<DataPreview | null>(null)
 
-
-
-  const processFile = async (file: File) => {
+  const processFile = useCallback(async (file: File) => {
     setUploadState(prev => ({ ...prev, uploading: true, error: null }))
     setDataPreview(null)
     setChatState({
@@ -80,14 +78,14 @@ export function useChat() {
     } finally {
       setUploadState(prev => ({ ...prev, uploading: false }))
     }
-  }
+  }, [])
 
-  const handleFileChange = (file: File) => {
+  const handleFileChange = useCallback((file: File) => {
     setUploadState(prev => ({ ...prev, file }))
     processFile(file)
-  }
+  }, [processFile])
 
-  const handleDrag = (e: React.DragEvent) => {
+  const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault()
     e.stopPropagation()
     if (e.type === "dragenter" || e.type === "dragover") {
@@ -95,9 +93,9 @@ export function useChat() {
     } else if (e.type === "dragleave") {
       setUploadState(prev => ({ ...prev, dragActive: false }))
     }
-  }
+  }, [])
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault()
     e.stopPropagation()
     setUploadState(prev => ({ ...prev, dragActive: false }))
@@ -110,13 +108,13 @@ export function useChat() {
         setUploadState(prev => ({ ...prev, error: "Please upload a CSV, XLS, or XLSX file" }))
       }
     }
-  }
+  }, [handleFileChange])
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setChatState(prev => ({ ...prev, input: e.target.value }))
-  }
+  }, [])
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
 
     if (!chatState.input.trim() || !uploadState.file || !chatState.sessionId) return
@@ -139,42 +137,54 @@ export function useChat() {
       isLoading: true,
     }))
 
+    // Create a placeholder AI message for streaming
+    const aiMessageId = (Date.now() + 1).toString()
+    const aiMessage: ChatMessage = {
+      id: aiMessageId,
+      content: "",
+      role: "assistant",
+      timestamp: new Date().toISOString(),
+      fileName: uploadState.file.name,
+    }
+
+    setChatState(prev => ({
+      ...prev,
+      messages: [...prev.messages, aiMessage],
+    }))
+
     try {
-      const response = await dataAPI.sendChatMessage(
+      // Use streaming API for real-time response
+      await dataAPI.sendStreamingMessage(
         chatState.sessionId,
         userMessage,
-        uploadState.file
+        uploadState.file,
+        (chunk: string) => {
+          setChatState(prev => ({
+            ...prev,
+            messages: prev.messages.map(msg =>
+              msg.id === aiMessageId
+                ? { ...msg, content: msg.content + chunk }
+                : msg
+            ),
+          }))
+        }
       )
-
-      // Add AI response to chat
-      const aiMessage: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        content: response.aiResponse,
-        role: "assistant",
-        timestamp: new Date().toISOString(),
-        fileName: uploadState.file.name,
-      }
 
       setChatState(prev => ({
         ...prev,
-        messages: [...prev.messages, aiMessage],
         isLoading: false,
       }))
     } catch (error: any) {
       const errorMessage = error.response?.data?.error || "Failed to send message"
 
-      // Add error message to chat
-      const errorMsg: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        content: `Error: ${errorMessage}`,
-        role: "assistant",
-        timestamp: new Date().toISOString(),
-        fileName: uploadState.file.name,
-      }
-
+      // Update the AI message with error
       setChatState(prev => ({
         ...prev,
-        messages: [...prev.messages, errorMsg],
+        messages: prev.messages.map(msg =>
+          msg.id === aiMessageId
+            ? { ...msg, content: `Error: ${errorMessage}` }
+            : msg
+        ),
         isLoading: false,
       }))
 
@@ -184,23 +194,23 @@ export function useChat() {
         variant: "destructive",
       })
     }
-  }
+  }, [chatState.input, chatState.sessionId, uploadState.file])
 
-  const loadChatHistory = async (sessionId: string) => {
+  const loadChatHistory = useCallback(async (sessionId: string) => {
     try {
       const messages = await dataAPI.getSessionMessages(sessionId)
       setChatState(prev => ({ ...prev, messages }))
     } catch (error) {
       console.warn("Failed to load chat history:", error)
     }
-  }
+  }, [])
 
   // Load chat history when session is created
   useEffect(() => {
     if (chatState.sessionId) {
       loadChatHistory(chatState.sessionId)
     }
-  }, [chatState.sessionId])
+  }, [chatState.sessionId, loadChatHistory])
 
   return {
     chatState,
@@ -214,4 +224,4 @@ export function useChat() {
     handleInputChange,
     handleSubmit,
   }
-} 
+}

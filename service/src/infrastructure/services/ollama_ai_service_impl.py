@@ -1,41 +1,44 @@
 import pandas as pd
 from typing import List
 import json
-from ...clients.openrouter_client import OpenRouterClient
+from ...clients.ollama_client import OllamaClient
 from ...services.ai_service import AIServiceInterface
 
-class AIServiceImpl(AIServiceInterface):
-    def __init__(self, api_key: str, model: str = "deepseek/deepseek-chat-v3-0324:free"):
+class OllamaAIServiceImpl(AIServiceInterface):
+    def __init__(self, base_url: str = "http://localhost:11434", model: str = "llama3.1:8b"):
         """
-        Initialize OpenRouter AI Service using OpenAI SDK
+        Initialize Ollama AI Service
         
         Args:
-            api_key: Your OpenRouter API key
-            model: Model to use (default: anthropic/claude-3.5-sonnet)
-                   Other options: openai/gpt-4, openai/gpt-3.5-turbo, 
-                   meta-llama/llama-2-70b-chat, etc.
+            base_url: Ollama server URL (default: http://localhost:11434)
+            model: Model to use (default: llama3.1:8b)
         """
-        self.api_key = api_key
+        self.base_url = base_url
         self.model = model
         
-        # Initialize OpenAI client with OpenRouter base URL
-        self.client = OpenRouterClient(api_key=api_key, model=model)
+        # Initialize Ollama client
+        self.client = OllamaClient(base_url=base_url, model=model)
     
-    def _make_api_request(self, messages: List[dict], max_tokens: int = 1000) -> str:
-        """Make synchronous request using OpenAI SDK"""
+    def _make_api_request(self, messages: List[dict], max_tokens: int = 1000, stream: bool = False):
+        """Make synchronous request using Ollama"""
         try:
             response = self.client.chat(
                 messages=messages,
                 max_tokens=max_tokens,
-                temperature=0.7
+                temperature=0.7,
+                stream=stream
             )
             return response
         except Exception as e:
-            raise Exception(f"OpenRouter API error: {str(e)}")
+            raise Exception(f"Ollama API error: {str(e)}")
     
     def make_api_request(self, messages: List[dict], max_tokens: int = 1000) -> str:
         """Public method to make API requests"""
         return self._make_api_request(messages, max_tokens)
+    
+    def make_streaming_api_request(self, messages: List[dict], max_tokens: int = 1000):
+        """Public method to make streaming API requests"""
+        return self._make_api_request(messages, max_tokens, stream=True)
     
     def _get_data_summary(self, df: pd.DataFrame) -> str:
         """Get a concise summary of the dataframe structure"""
@@ -71,7 +74,7 @@ class AIServiceImpl(AIServiceInterface):
         return json.dumps(summary, indent=2)
     
     async def generate_insights(self, df: pd.DataFrame, file_name: str) -> List[str]:
-        """Generate AI-powered insights about the data"""
+        """Generate AI-powered insights about the data using Ollama"""
         try:
             data_summary = self._get_data_summary(df)
             
@@ -120,7 +123,7 @@ class AIServiceImpl(AIServiceInterface):
         
         except Exception as e:
             # Fallback to basic insights if AI service fails
-            print(f"AI service failed, using fallback: {e}")
+            print(f"Ollama AI service failed, using fallback: {e}")
             return self._generate_fallback_insights(df)
     
     def _generate_fallback_insights(self, df: pd.DataFrame) -> List[str]:
@@ -167,7 +170,7 @@ class AIServiceImpl(AIServiceInterface):
         return insights[:4]
     
     async def generate_sample_questions(self, df: pd.DataFrame, headers: List[str]) -> List[str]:
-        """Generate AI-powered sample questions based on the data structure"""
+        """Generate AI-powered sample questions based on the data structure using Ollama"""
         try:
             data_summary = self._get_data_summary(df)
             
@@ -221,7 +224,7 @@ class AIServiceImpl(AIServiceInterface):
             
         except Exception as e:
             # Fallback to basic questions if AI service fails
-            print(f"AI service failed, using fallback: {e}")
+            print(f"Ollama AI service failed, using fallback: {e}")
             return self._generate_fallback_questions(df, headers)
     
     def _generate_fallback_questions(self, df: pd.DataFrame, headers: List[str]) -> List[str]:
@@ -271,4 +274,4 @@ class AIServiceImpl(AIServiceInterface):
     
     def close(self):
         """Close the client connection"""
-        self.client.close()
+        self.client.close() 

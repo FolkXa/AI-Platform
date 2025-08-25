@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Optional
+from typing import List, Optional, Generator
 import pandas as pd
 from ..entities.chat_message import ChatMessage, ChatSession
 
@@ -18,6 +18,10 @@ class ChatServiceInterface(ABC):
     
     @abstractmethod
     async def get_chat_response(self, session_id: str, user_message: str, df: pd.DataFrame) -> str:
+        pass
+    
+    @abstractmethod
+    async def get_streaming_chat_response(self, session_id: str, user_message: str, df: pd.DataFrame) -> Generator:
         pass
     
     @abstractmethod

@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import AsyncGenerator, List, Optional, Generator
 import pandas as pd
 from ...entities.chat_message import ChatMessage, ChatSession
 from ...services.chat_service import ChatServiceInterface
@@ -41,6 +41,40 @@ class ChatUseCase:
             error_msg = f"Error processing message: {str(e)}"
             await self.chat_service.add_message(session_id, error_msg, "assistant")
             return error_msg
+    
+    async def send_streaming_message(self, session_id: str, message: str, file_data: bytes, filename: str) -> AsyncGenerator[str, None]:
+        """Send a message and get streaming AI response"""
+        try:
+            # Add user message to session
+            await self.chat_service.add_message(session_id, message, "user")
+            
+            # Read the file data
+            import io
+            file_obj = io.BytesIO(file_data)
+            
+            # Parse the CSV data
+            if filename.lower().endswith('.csv'):
+                df = self.file_service.read_csv(file_obj)
+            else:
+                raise ValueError("Only CSV files are supported for chat")
+            
+            # Get streaming AI response
+            response_stream = self.chat_service.get_streaming_chat_response(session_id, message, df)
+            
+            # Collect the full response for storage
+            full_response = ""
+            async for chunk in response_stream:
+                content = str(chunk)
+                full_response += content
+                yield content
+            
+            # Add AI response to session
+            await self.chat_service.add_message(session_id, full_response, "assistant")
+            
+        except Exception as e:
+            error_msg = f"Error processing message: {str(e)}"
+            await self.chat_service.add_message(session_id, error_msg, "assistant")
+            yield error_msg
     
     async def get_session_messages(self, session_id: str) -> List[ChatMessage]:
         """Get all messages for a session"""

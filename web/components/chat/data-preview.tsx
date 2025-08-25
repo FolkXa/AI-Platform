@@ -1,5 +1,6 @@
 "use client"
 
+import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { BarChart3, TrendingUp } from "lucide-react"
@@ -12,13 +13,29 @@ interface DataPreviewProps {
 
 export function DataPreview({ dataPreview, formatFileSize }: DataPreviewProps) {
   return (
-    <Card className="bg-gray-900/50 border-gray-800">
-      <CardHeader>
-        <CardTitle className="flex items-center space-x-2">
-          <BarChart3 className="h-5 w-5 text-green-400" />
-          <span>Data Overview</span>
-        </CardTitle>
-      </CardHeader>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      <Card className="bg-gray-900/50 border-gray-800">
+        <CardHeader>
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
+          >
+            <CardTitle className="flex items-center space-x-2">
+              <motion.div
+                animate={{ rotate: [0, 5, -5, 0] }}
+                transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+              >
+                <BarChart3 className="h-5 w-5 text-green-400" />
+              </motion.div>
+              <span>Data Overview</span>
+            </CardTitle>
+          </motion.div>
+        </CardHeader>
       <CardContent>
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
@@ -96,5 +113,6 @@ export function DataPreview({ dataPreview, formatFileSize }: DataPreviewProps) {
         </div>
       </CardContent>
     </Card>
+    </motion.div>
   )
 } 

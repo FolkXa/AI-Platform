@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import List
+from typing import AsyncGenerator, List
 import pandas as pd
-from ..entities.file_analysis import FileAnalysis
 
 class AIServiceInterface(ABC):
     @abstractmethod
@@ -14,4 +13,8 @@ class AIServiceInterface(ABC):
     
     @abstractmethod
     def make_api_request(self, messages: List[dict], max_tokens: int = 1000) -> str:
+        pass
+    
+    @abstractmethod
+    def make_streaming_api_request(self, messages: List[dict], max_tokens: int = 1000) -> AsyncGenerator[str, None]:
         pass

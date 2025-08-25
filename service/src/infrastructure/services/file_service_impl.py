@@ -19,6 +19,11 @@ class FileServiceImpl(FileServiceInterface):
         else:
             raise ValueError("Unsupported file format")
         
+        # Get file size
+        file.seek(0, io.SEEK_END)
+        file_size = file.tell()
+        file.seek(0)  # Reset to beginning
+        
         # Get basic file info
         rows = len(df)
         columns = len(df.columns)
@@ -30,18 +35,15 @@ class FileServiceImpl(FileServiceInterface):
             sample_data.append([str(value) for value in row.values])
         
         # Generate AI insights and questions
-        print(1)
         try:
             insights = await self.ai_service.generate_insights(df, filename)
         except Exception as e:
             print(f"Error generating AI insights: {e}")
             insights = []
-        print(insights)
-        print(2)
         sample_questions = await self.ai_service.generate_sample_questions(df, headers)
-        print(3)
         return FileAnalysis(
             file_name=filename,
+            file_size=file_size,
             rows=rows,
             columns=columns,
             headers=headers,

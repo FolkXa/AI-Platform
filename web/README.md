@@ -49,53 +49,73 @@ POST /api/v1/analysis-upload-file
 ```
 Upload a CSV file and automatically create a chat session.
 
-### 2. Create Chat Session
+### 2. Create Ollama Chat Session
 ```
-POST /api/v1/chat/create-session
+POST /api/v1/ollama-chat/create-session
 ```
-Create a new chat session for a CSV file.
+Create a new Ollama chat session for a CSV file.
 
-### 3. Send Chat Message
+### 3. Send Ollama Chat Message (Non-streaming)
 ```
-POST /api/v1/chat/send-message
+POST /api/v1/ollama-chat/send-message
 ```
-Send a message to the chat and get an AI response about your CSV data.
+Send a message to the chat and get an Ollama AI response about your CSV data.
 
-### 4. Get Session Messages
+### 4. Send Ollama Streaming Chat Message
 ```
-GET /api/v1/chat/session/{session_id}/messages
+POST /api/v1/ollama-chat/send-streaming-message
 ```
-Get all messages in a chat session.
+Send a message to the chat and get a streaming Ollama AI response using Server-Sent Events (SSE).
 
-### 5. Get Session Details
+### 5. Get Ollama Session Messages
 ```
-GET /api/v1/chat/session/{session_id}
+GET /api/v1/ollama-chat/session/{session_id}/messages
 ```
-Get details about a chat session.
+Get all messages in an Ollama chat session.
+
+### 6. Get Ollama Session Details
+```
+GET /api/v1/ollama-chat/session/{session_id}
+```
+Get details about an Ollama chat session.
 
 ## Technical Implementation
 
 ### Frontend Changes
 - Updated `app/chat-with-data/page.tsx` with custom chat state management
 - Added session management and message handling
-- Implemented real-time chat interface with loading states
+- **Streaming Support**: Implemented real-time streaming chat interface with typing indicators
 - Added error handling and user feedback
 - **Markdown Support**: Added `react-markdown` with syntax highlighting for code blocks
 - **Component Architecture**: Split into reusable components (`FileUpload`, `DataPreview`, `ChatInterface`)
-- **Custom Hook**: Created `useChat` hook for state management
+- **Custom Hook**: Created `useChat` hook for state management with streaming support
 - **Type Safety**: Centralized types in `types/chat.ts`
+- **Ollama Integration**: Updated API calls to use Ollama endpoints with streaming support
 
 ### API Integration
-- Updated `lib/api.ts` with new CSV chat endpoints
+- Updated `lib/api.ts` with new Ollama chat endpoints
+- Added streaming support with Server-Sent Events (SSE) parsing
 - Added TypeScript interfaces for chat sessions and messages
 - Implemented proper error handling and response parsing
+- **Streaming Implementation**: Real-time message updates as AI responds
 
 ### Backend Requirements
 The implementation expects a backend service running on `http://localhost:8000` with the following capabilities:
 - CSV file processing and analysis
 - Chat session management
-- AI-powered responses using OpenRouter API with Claude 3.5 Sonnet
+- **Ollama Integration**: AI-powered responses using local Ollama models
+- **Streaming Support**: Real-time streaming responses using Server-Sent Events (SSE)
 - Message history storage
+
+### Ollama Configuration
+The system supports various Ollama models:
+- `llama2` - Meta's Llama 2 model
+- `llama2:13b` - Larger Llama 2 model  
+- `codellama` - Code-focused model
+- `mistral` - Mistral AI model
+- `neural-chat` - Intel's neural chat model
+
+To use different models, configure the `OLLAMA_MODEL` environment variable in your backend.
 
 ## Session Management
 
@@ -113,6 +133,16 @@ The system includes comprehensive error handling:
 - Message sending failures
 - Network connectivity issues
 - Graceful fallbacks for unavailable services
+
+## Streaming Features
+
+The chat interface now supports real-time streaming responses:
+
+- **Live Typing**: See AI responses appear in real-time as they're generated
+- **Typing Indicators**: Animated dots show when AI is responding
+- **Smooth Experience**: No waiting for complete responses before seeing content
+- **Auto-scroll**: Chat automatically scrolls to show new content
+- **Error Handling**: Graceful handling of streaming interruptions
 
 ## Markdown Features
 

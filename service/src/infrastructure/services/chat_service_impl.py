@@ -1,7 +1,9 @@
 import uuid
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Generator
 import pandas as pd
 from datetime import datetime
+
+from ...infrastructure.services.openrouter_ai_service_impl import OpenRouterAIServiceImpl
 from ...services.chat_service import ChatServiceInterface
 from ...services.ai_service import AIServiceInterface
 from ...entities.chat_message import ChatMessage, ChatSession
@@ -66,14 +68,14 @@ class ChatServiceImpl(ChatServiceInterface):
         data_summary = self._get_data_summary(df)
         
         # Build the prompt
-        prompt = f"""
-        You are a helpful data analyst assistant. You're helping analyze a CSV file called "{session.file_name}".
+        prompt = """
+        You are a helpful data analyst assistant. You're helping analyze a CSV file called "{file_name}".
         
         Data Summary:
         {data_summary}
         
         Previous conversation context:
-        {'\n'.join(conversation_history)}
+        {conversation_history}
         
         User's current question: {user_message}
         
@@ -82,7 +84,7 @@ class ChatServiceImpl(ChatServiceInterface):
         If the user asks for something that can't be answered with the available data, politely explain what information is missing.
         
         Keep your response concise but informative.
-        """
+        """.format(file_name = session.file_name, data_summary = data_summary, conversation_history = '\n'.join(conversation_history), user_message = user_message)
         
         try:
             # Use the AI service to generate response
@@ -99,6 +101,64 @@ class ChatServiceImpl(ChatServiceInterface):
             
         except Exception as e:
             return f"I apologize, but I encountered an error while analyzing the data: {str(e)}. Please try rephrasing your question or ask about a different aspect of the data."
+    
+    async def get_streaming_chat_response(self, session_id: str, user_message: str, df: pd.DataFrame):
+        """Get streaming AI response for a user message about the CSV data"""
+        if isinstance(self.ai_service, OpenRouterAIServiceImpl):
+            raise ValueError("Streaming is not supported for OpenRouter AI service")
+        
+        session = self.sessions.get(session_id)
+        if not session:
+            raise ValueError(f"Session {session_id} not found")
+        
+        # Get conversation history
+        conversation_history = []
+        for msg in session.messages[-10:]:  # Last 10 messages for context
+            conversation_history.append(f"{msg.role}: {msg.content}")
+        
+        # Create context about the data
+        data_summary = self._get_data_summary(df)
+        
+        # Build the prompt
+        prompt = """
+        You are a helpful data analyst assistant. You're helping analyze a CSV file called "{file_name}".
+        
+        Data Summary:
+        {data_summary}
+        
+        Previous conversation context:
+        {conversation_history}
+        
+        User's current question: {user_message}
+        
+        Please provide a helpful, accurate response about the data. If the user is asking for analysis, calculations, or insights, use the actual data from the CSV file. Be specific and mention actual numbers, column names, and patterns you find in the data.
+        
+        If the user asks for something that can't be answered with the available data, politely explain what information is missing.
+        
+        Keep your response concise but informative.
+        """.format(file_name = session.file_name, data_summary = data_summary, conversation_history = '\n'.join(conversation_history), user_message = user_message)
+        
+        try:
+            # Use the AI service to generate streaming response
+            messages = [
+                {
+                    "role": "system",
+                    "content": "You are a helpful data analyst assistant. Provide accurate, specific answers about CSV data using actual numbers and column names from the dataset."
+                },
+                {"role": "user", "content": prompt}
+            ]
+            
+            response_stream = self.ai_service.make_streaming_api_request(messages, max_tokens=800)
+            for chunk in response_stream:
+                if hasattr(chunk, 'message') and hasattr(chunk.message, 'content'):
+                    yield chunk.message.content
+                else:
+                    yield str(chunk)
+            
+        except Exception as e:
+            # Return a single error message as a generator
+            error_msg = f"I apologize, but I encountered an error while analyzing the data: {str(e)}. Please try rephrasing your question or ask about a different aspect of the data."
+            yield error_msg
     
     async def get_session_messages(self, session_id: str) -> List[ChatMessage]:
         """Get all messages for a session"""
