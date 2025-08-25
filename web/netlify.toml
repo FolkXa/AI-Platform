@@ -1,0 +1,7 @@
+[build]
+  command = "pnpm build"
+  publish = ".next"
+
+# Ensure Next.js features (SSR/ISR/Images) work on Netlify
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
