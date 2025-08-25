@@ -89,11 +89,7 @@ export default function SignIn() {
                   className="w-full bg-white hover:bg-gray-100 text-gray-900 border border-gray-300"
                   size="lg"
                 >
-                  {loading === "google" ? (
-                    <Loader2 className="h-5 w-5 mr-3 animate-spin" />
-                  ) : (
-                    <Chrome className="h-5 w-5 mr-3" />
-                  )}
+                  <Chrome className="h-5 w-5 mr-3" />
                   Continue with Google
                 </Button>
               )}
@@ -105,11 +101,7 @@ export default function SignIn() {
                   className="w-full bg-gray-800 hover:bg-gray-700 text-white border border-gray-700"
                   size="lg"
                 >
-                  {loading === "github" ? (
-                    <Loader2 className="h-5 w-5 mr-3 animate-spin" />
-                  ) : (
-                    <Github className="h-5 w-5 mr-3" />
-                  )}
+                  <Github className="h-5 w-5 mr-3" />
                   Continue with GitHub
                 </Button>
               )}
