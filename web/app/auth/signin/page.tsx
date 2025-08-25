@@ -82,29 +82,25 @@ export default function SignIn() {
 
           {providers ? (
             <>
-              {providers.google && (
-                <Button
-                  onClick={() => handleSignIn("google")}
-                  disabled={loading === "google"}
-                  className="w-full bg-white hover:bg-gray-100 text-gray-900 border border-gray-300"
-                  size="lg"
-                >
-                  <Chrome className="h-5 w-5 mr-3" />
-                  Continue with Google
-                </Button>
-              )}
+              <Button
+                onClick={() => handleSignIn("google")}
+                disabled={loading === "google"}
+                className="w-full bg-white hover:bg-gray-100 text-gray-900 border border-gray-300"
+                size="lg"
+              >
+                <Chrome className="h-5 w-5 mr-3" />
+                Continue with Google
+              </Button> 
 
-              {providers.github && (
-                <Button
+              <Button
                   onClick={() => handleSignIn("github")}
                   disabled={loading === "github"}
                   className="w-full bg-gray-800 hover:bg-gray-700 text-white border border-gray-700"
                   size="lg"
                 >
-                  <Github className="h-5 w-5 mr-3" />
-                  Continue with GitHub
-                </Button>
-              )}
+                <Github className="h-5 w-5 mr-3" />
+                Continue with GitHub
+              </Button>
             </>
           ) : (
             <div className="space-y-4">
