@@ -193,7 +193,7 @@ export function FileUpload({
                   <FileSpreadsheet className="h-5 w-5 text-green-400" />
                 </motion.div>
                 <div className="flex-1">
-                  <p className="font-medium">{uploadState.file.name}</p>
+                  <p className="font-medium whitespace-nowrap overflow-hidden text-ellipsis">{uploadState.file.name}</p>
                   <p className="text-sm text-gray-400">{formatFileSize(uploadState.file.size)}</p>
                 </div>
                 {dataPreview && (
