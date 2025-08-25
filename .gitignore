@@ -25,9 +25,6 @@ yarn.lock
 # Vercel
 .vercel/
 
-# Netlify
-web/.netlify/
-
 # Production build
 build/
 
